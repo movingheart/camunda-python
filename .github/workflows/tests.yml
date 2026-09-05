@@ -1,0 +1,55 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: pytest (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            pyproject.toml
+
+      - name: Install dependencies (with api extras)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[api]"
+          pip install pytest
+
+      - name: Run full test suite
+        run: pytest tests/ -v --tb=short
+        env:
+          # github runner = UTF-8 anyway; this is documentation
+          LC_ALL: C.UTF-8
+          PYTHONUTF8: "1"
+
+      - name: Demo scripts smoke check
+        run: |
+          set -e
+          for d in examples/run_*.py; do
+            name=$(basename "$d" .py)
+            timeout 60 python "$d" > /tmp/demo.log 2>&1 || true
+            if grep -q "✅" /tmp/demo.log; then
+              echo "PASS  $name"
+            else
+              echo "SMOKE FAIL  $name (see /tmp/demo.log)"
+              tail -3 /tmp/demo.log | sed 's/^/  /'
+            fi
+          done
