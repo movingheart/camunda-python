@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dmn:definitions xmlns:dmn="https://www.omg.org/spec/DMN/20191111/MODEL/">
+  <dmn:decision id="loan-grading" name="贷款等级评定">
+    <dmn:decisionTable hitPolicy="UNIQUE">
+      <dmn:input id="i1" label="金额">
+        <dmn:inputExpression id="ie1" typeRef="number">amount</dmn:inputExpression>
+      </dmn:input>
+      <dmn:input id="i2" label="信用分">
+        <dmn:inputExpression id="ie2" typeRef="number">credit_score</dmn:inputExpression>
+      </dmn:input>
+      <dmn:output id="o1" name="grade" label="等级" typeRef="string"/>
+      <dmn:rule id="r1">
+        <dmn:inputEntry><dmn:text>&lt;= 5000</dmn:text></dmn:inputEntry>
+        <dmn:inputEntry><dmn:text></dmn:text></dmn:inputEntry>
+        <dmn:outputEntry><dmn:text>"A"</dmn:text></dmn:outputEntry>
+      </dmn:rule>
+      <dmn:rule id="r2">
+        <dmn:inputEntry><dmn:text>&gt; 5000</dmn:text></dmn:inputEntry>
+        <dmn:inputEntry><dmn:text>&gt;= 700</dmn:text></dmn:inputEntry>
+        <dmn:outputEntry><dmn:text>"B"</dmn:text></dmn:outputEntry>
+      </dmn:rule>
+      <dmn:rule id="r3">
+        <dmn:inputEntry><dmn:text>&gt; 5000</dmn:text></dmn:inputEntry>
+        <dmn:inputEntry><dmn:text>&lt; 700</dmn:text></dmn:inputEntry>
+        <dmn:outputEntry><dmn:text>"C"</dmn:text></dmn:outputEntry>
+      </dmn:rule>
+    </dmn:decisionTable>
+  </dmn:decision>
+  <dmn:decision id="rate-discount" name="利率折扣（多行命中）">
+    <dmn:decisionTable hitPolicy="COLLECT" aggregation="SUM">
+      <dmn:input id="i1" label="等级">
+        <dmn:inputExpression id="ie1" typeRef="string">grade</dmn:inputExpression>
+      </dmn:input>
+      <dmn:output id="o1" name="discount" label="折扣点" typeRef="number"/>
+      <dmn:rule id="r1">
+        <dmn:inputEntry><dmn:text>"A", "B"</dmn:text></dmn:inputEntry>
+        <dmn:outputEntry><dmn:text>0.5</dmn:text></dmn:outputEntry>
+      </dmn:rule>
+      <dmn:rule id="r2">
+        <dmn:inputEntry><dmn:text>"A"</dmn:text></dmn:inputEntry>
+        <dmn:outputEntry><dmn:text>0.3</dmn:text></dmn:outputEntry>
+      </dmn:rule>
+    </dmn:decisionTable>
+  </dmn:decision>
+</dmn:definitions>

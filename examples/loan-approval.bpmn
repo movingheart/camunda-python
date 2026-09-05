@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  targetNamespace="http://example.camunda.python/loan">
+  <bpmn:process id="loan-approval" name="贷款审批流程" isExecutable="true">
+    <!-- start -->
+    <bpmn:startEvent id="start" name="提交申请"/>
+    <!-- 额度校验：服务任务（delegate 名 checkCredit） -->
+    <bpmn:serviceTask id="check-credit" name="信用额度校验"
+                      camunda:delegateExpression="${checkCredit}"/>
+    <!-- 排他网关：金额 >= 10000 走人工审批，否则自动通过 -->
+    <bpmn:exclusiveGateway id="amount-gateway" name="金额判断" default="flow-auto-pass"/>
+    <bpmn:userTask id="manual-review" name="人工审批"
+                   camunda:assignee="manager"/>
+    <!-- 审批结果判断 -->
+    <bpmn:exclusiveGateway id="decision-gateway" name="审批结果" default="flow-reject"/>
+    <bpmn:endEvent id="end-approved" name="已批准"/>
+    <bpmn:endEvent id="end-rejected" name="已拒绝"/>
+
+    <!-- flows -->
+    <bpmn:sequenceFlow id="flow-start" sourceRef="start" targetRef="check-credit"/>
+    <bpmn:sequenceFlow id="flow-check" sourceRef="check-credit" targetRef="amount-gateway"/>
+    <bpmn:sequenceFlow id="flow-manual" name="金额超限" sourceRef="amount-gateway" targetRef="manual-review">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${amount >= 10000}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow-auto-pass" name="自动通过" sourceRef="amount-gateway" targetRef="end-approved"/>
+    <bpmn:sequenceFlow id="flow-review" sourceRef="manual-review" targetRef="decision-gateway"/>
+    <bpmn:sequenceFlow id="flow-approve" name="同意" sourceRef="decision-gateway" targetRef="end-approved">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approved == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow-reject" name="拒绝" sourceRef="decision-gateway" targetRef="end-rejected"/>
+  </bpmn:process>
+</bpmn:definitions>

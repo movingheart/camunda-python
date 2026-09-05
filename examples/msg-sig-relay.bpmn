@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  targetNamespace="http://example">
+  <bpmn:message id="M1" name="paymentReceived"/>
+  <bpmn:process id="order-relay" name="订单发货（等待支付回调）" isExecutable="true">
+    <bpmn:startEvent id="start"/>
+    <bpmn:intermediateCatchEvent id="waitForPayment" name="等待支付回调">
+      <bpmn:messageEventDefinition messageRef="M1"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:serviceTask id="ship" name="发货" camunda:delegateExpression="${ship}"/>
+    <bpmn:endEvent id="end"/>
+    <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="waitForPayment"/>
+    <bpmn:sequenceFlow id="f2" sourceRef="waitForPayment" targetRef="ship"/>
+    <bpmn:sequenceFlow id="f3" sourceRef="ship" targetRef="end"/>
+  </bpmn:process>
+</bpmn:definitions>

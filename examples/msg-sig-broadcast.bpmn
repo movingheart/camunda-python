@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  targetNamespace="http://example">
+  <bpmn:signal id="S1" name="maintenance"/>
+  <bpmn:process id="system-notice" name="工单处理（维护广播通知）" isExecutable="true">
+    <bpmn:startEvent id="start"/>
+    <bpmn:userTask id="work" name="处理工单"/>
+    <bpmn:boundaryEvent id="maintenanceAlarm" name="维护广播" attachedToRef="work" cancelActivity="false">
+      <bpmn:signalEventDefinition signalRef="S1"/>
+    </bpmn:boundaryEvent>
+    <bpmn:endEvent id="notice-end" name="收到通知"/>
+    <bpmn:endEvent id="main-end"/>
+    <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="work"/>
+    <bpmn:sequenceFlow id="f2" sourceRef="work" targetRef="main-end"/>
+    <bpmn:sequenceFlow id="bf" sourceRef="maintenanceAlarm" targetRef="notice-end"/>
+  </bpmn:process>
+</bpmn:definitions>

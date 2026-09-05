@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  targetNamespace="http://example.camunda.python/boundary">
+  <bpmn:process id="approval-timeout" name="审批超时自动降级" isExecutable="true">
+    <!-- 提交审计：asyncAfter -> delegate 在命令内执行，离开推进由 async-after 作业完成 -->
+    <bpmn:startEvent id="start" name="发起审批"/>
+    <bpmn:serviceTask id="auditSubmit" name="提交审批审计"
+                      camunda:asyncAfter="true"
+                      camunda:delegateExpression="${auditSubmit}"/>
+    <!-- 人工审批：挂在审批任务上的超时边界（2 秒未处理 -> 自动降级） -->
+    <bpmn:userTask id="approve" name="人工审批" camunda:assignee="manager"/>
+    <bpmn:boundaryEvent id="timeout" name="审批超时" attachedToRef="approve" cancelActivity="true">
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT2S</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <!-- 超时路径：自动降级处理 -->
+    <bpmn:serviceTask id="autoEscalate" name="超时自动升级"
+                      camunda:delegateExpression="${escalate}"/>
+    <!-- 通过路径：归档 -->
+    <bpmn:serviceTask id="archive" name="归档通过记录"
+                      camunda:delegateExpression="${archive}"/>
+    <bpmn:endEvent id="endApproved" name="审批通过"/>
+    <bpmn:endEvent id="endTimeout" name="超时降级完成"/>
+
+    <bpmn:sequenceFlow id="f-start" sourceRef="start" targetRef="auditSubmit"/>
+    <bpmn:sequenceFlow id="f-audit" sourceRef="auditSubmit" targetRef="approve"/>
+    <bpmn:sequenceFlow id="f-approve" sourceRef="approve" targetRef="archive"/>
+    <bpmn:sequenceFlow id="f-archive" sourceRef="archive" targetRef="endApproved"/>
+    <bpmn:sequenceFlow id="f-timeout" sourceRef="timeout" targetRef="autoEscalate"/>
+    <bpmn:sequenceFlow id="f-esc" sourceRef="autoEscalate" targetRef="endTimeout"/>
+  </bpmn:process>
+</bpmn:definitions>

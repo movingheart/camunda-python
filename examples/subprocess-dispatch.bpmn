@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  targetNamespace="http://camunda.example/subprocess">
+  <!--
+    M4-2a 演示流程：订单履约（内嵌子流程 + 边界 timer 超时降级）
+
+    主流程：受理订单 -> [订单履约子流程] -> 完成
+      子流程内部：备货 -> 质量检验（人工） -> 发货
+      超时边界：子流程 2 秒未走完 -> 中断整段子流程 -> 自动退款路径
+
+    同一流程两种走法：
+      正常：人工通过质量检验 -> 发货 -> 子流程收束 -> 主流程完成
+      超时：质检任务 2 秒无人处理 -> 边界 timer 到期中断整段子流程 ->
+            内部任务归档、子流程 actinst 结算 -> 自动退款完成
+  -->
+  <bpmn:process id="order-fulfillment" name="订单履约" isExecutable="true">
+    <bpmn:startEvent id="start" name="新订单"/>
+    <bpmn:serviceTask id="receive" name="订单受理"
+                      camunda:delegateExpression="${receiveOrder}"/>
+    <bpmn:subProcess id="fulfill" name="订单履约（备货->质检->发货）">
+      <bpmn:startEvent id="innerStart"/>
+      <bpmn:serviceTask id="packItems" name="仓库备货"
+                        camunda:delegateExpression="${packItems}"/>
+      <bpmn:userTask id="qualityCheck" name="质量检验"/>
+      <bpmn:serviceTask id="ship" name="物流发货"
+                        camunda:delegateExpression="${shipOrder}"/>
+      <bpmn:endEvent id="innerEnd"/>
+      <bpmn:sequenceFlow id="innerF1" sourceRef="innerStart" targetRef="packItems"/>
+      <bpmn:sequenceFlow id="innerF2" sourceRef="packItems" targetRef="qualityCheck"/>
+      <bpmn:sequenceFlow id="innerF3" sourceRef="qualityCheck" targetRef="ship"/>
+      <bpmn:sequenceFlow id="innerF4" sourceRef="ship" targetRef="innerEnd"/>
+    </bpmn:subProcess>
+    <bpmn:serviceTask id="doneNotify" name="完成通知"
+                      camunda:delegateExpression="${notifyDone}"/>
+    <bpmn:endEvent id="endDone" name="履约完成"/>
+    <bpmn:boundaryEvent id="timeoutEsc" attachedToRef="fulfill" cancelActivity="true">
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT2S</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:serviceTask id="autoRefund" name="超时自动退款"
+                      camunda:delegateExpression="${autoRefund}"/>
+    <bpmn:endEvent id="endRefund" name="已退款"/>
+    <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="receive"/>
+    <bpmn:sequenceFlow id="f2" sourceRef="receive" targetRef="fulfill"/>
+    <bpmn:sequenceFlow id="f3" sourceRef="fulfill" targetRef="doneNotify"/>
+    <bpmn:sequenceFlow id="f4" sourceRef="doneNotify" targetRef="endDone"/>
+    <bpmn:sequenceFlow id="f5" sourceRef="timeoutEsc" targetRef="autoRefund"/>
+    <bpmn:sequenceFlow id="f6" sourceRef="autoRefund" targetRef="endRefund"/>
+  </bpmn:process>
+</bpmn:definitions>

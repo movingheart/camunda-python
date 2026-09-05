@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  targetNamespace="http://example.camunda.python/timer">
+  <bpmn:process id="scheduled-inspection" name="定时巡检流程" isExecutable="true">
+    <!-- 定时启动：部署 2 秒后自动开始一次巡检（timeDuration 相对延迟） -->
+    <bpmn:startEvent id="kickoff" name="定时开始">
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT2S</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:startEvent>
+    <!-- 健康扫描：asyncBefore -> 节点行为由 async-continuation 作业执行 -->
+    <bpmn:serviceTask id="scan" name="健康扫描"
+                      camunda:asyncBefore="true"
+                      camunda:delegateExpression="${healthScan}"/>
+    <!-- 人工复核 -->
+    <bpmn:userTask id="review" name="人工复核" camunda:assignee="ops"/>
+    <!-- 冷却等待：timer 中间捕获（timeDuration），到期自动继续 -->
+    <bpmn:intermediateCatchEvent id="cooldown" name="冷却 3 秒">
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT3S</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:endEvent id="done" name="巡检完成"/>
+
+    <bpmn:sequenceFlow id="f-kick" sourceRef="kickoff" targetRef="scan"/>
+    <bpmn:sequenceFlow id="f-scan" sourceRef="scan" targetRef="review"/>
+    <bpmn:sequenceFlow id="f-rev" sourceRef="review" targetRef="cooldown"/>
+    <bpmn:sequenceFlow id="f-cool" sourceRef="cooldown" targetRef="done"/>
+  </bpmn:process>
+</bpmn:definitions>

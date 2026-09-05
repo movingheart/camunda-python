@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  targetNamespace="http://camunda.example/m4-2b4">
+  <!-- 场景 A/B：客服工单处理。handle 挂非中断式边界 remindEsc -->
+  <!-- （cancelActivity=false）：到期不打断处理，并发催办提醒线收束。    -->
+  <bpmn:process id="ticket-support" name="客服工单-超时催办" isExecutable="true">
+    <bpmn:startEvent id="start"/>
+    <bpmn:sequenceFlow id="f0" sourceRef="start" targetRef="handle"/>
+    <bpmn:userTask id="handle" name="处理工单"/>
+    <bpmn:boundaryEvent id="remindEsc" attachedToRef="handle" cancelActivity="false">
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT2S</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:serviceTask id="remindTask" name="发送催办提醒"
+                      camunda:delegateExpression="${sendReminder}"/>
+    <bpmn:sequenceFlow id="f1" sourceRef="handle" targetRef="endDone"/>
+    <bpmn:sequenceFlow id="f2" sourceRef="remindEsc" targetRef="remindTask"/>
+    <bpmn:sequenceFlow id="f3" sourceRef="remindTask" targetRef="endRemind"/>
+    <bpmn:endEvent id="endDone"/>
+    <bpmn:endEvent id="endRemind"/>
+  </bpmn:process>
+
+  <!-- 场景 C：复核流程。esc -> review(userTask)：主线 handle 先完成时实例不结束，-->
+  <!-- 并发复核线收束后才完成（root 转 SCOPE 停驻语义）。                         -->
+  <bpmn:process id="ticket-review" name="工单复核-并发线收束" isExecutable="true">
+    <bpmn:startEvent id="start"/>
+    <bpmn:sequenceFlow id="f0" sourceRef="start" targetRef="handle"/>
+    <bpmn:userTask id="handle" name="处理工单"/>
+    <bpmn:boundaryEvent id="reviewEsc" attachedToRef="handle" cancelActivity="false">
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT2S</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:userTask id="review" name="复核处理"/>
+    <bpmn:sequenceFlow id="f1" sourceRef="handle" targetRef="endMain"/>
+    <bpmn:sequenceFlow id="f2" sourceRef="reviewEsc" targetRef="review"/>
+    <bpmn:sequenceFlow id="f3" sourceRef="review" targetRef="endReview"/>
+    <bpmn:endEvent id="endMain"/>
+    <bpmn:endEvent id="endReview"/>
+  </bpmn:process>
+</bpmn:definitions>

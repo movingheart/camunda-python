@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  targetNamespace="http://example.camunda.python/timer">
+  <bpmn:process id="periodic-billing" name="周期结算流程" isExecutable="true">
+    <!-- 周期启动：ISO-8601 重复周期 R3/PT2S = 每 2 秒结算一次，共 3 次 -->
+    <bpmn:startEvent id="billing-tick" name="周期触发">
+      <bpmn:timerEventDefinition>
+        <bpmn:timeCycle xsi:type="bpmn:tFormalExpression">R3/PT2S</bpmn:timeCycle>
+      </bpmn:timerEventDefinition>
+    </bpmn:startEvent>
+    <!-- 结算动作（pass-through 无实现也行，这里注册 delegate 展示变量） -->
+    <bpmn:serviceTask id="charge" name="执行结算"
+                      camunda:delegateExpression="${charge}"/>
+    <bpmn:endEvent id="billing-done" name="结算完成"/>
+
+    <bpmn:sequenceFlow id="fb-tick" sourceRef="billing-tick" targetRef="charge"/>
+    <bpmn:sequenceFlow id="fb-charge" sourceRef="charge" targetRef="billing-done"/>
+  </bpmn:process>
+</bpmn:definitions>

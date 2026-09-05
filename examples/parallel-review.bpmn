@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  targetNamespace="http://example.camunda.python/parallel">
+  <bpmn:process id="parallel-review" name="双人并行审批" isExecutable="true">
+    <bpmn:startEvent id="start" name="发起"/>
+    <!-- 并行网关：同时发两个独立审批任务 -->
+    <bpmn:parallelGateway id="fork" name="并行分发"/>
+    <bpmn:userTask id="review-a" name="审批人 A"/>
+    <bpmn:userTask id="review-b" name="审批人 B"/>
+    <bpmn:parallelGateway id="join" name="并行汇聚"/>
+    <bpmn:endEvent id="end" name="结束"/>
+
+    <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="fork"/>
+    <bpmn:sequenceFlow id="f2" sourceRef="fork" targetRef="review-a"/>
+    <bpmn:sequenceFlow id="f3" sourceRef="fork" targetRef="review-b"/>
+    <bpmn:sequenceFlow id="f4" sourceRef="review-a" targetRef="join"/>
+    <bpmn:sequenceFlow id="f5" sourceRef="review-b" targetRef="join"/>
+    <bpmn:sequenceFlow id="f6" sourceRef="join" targetRef="end"/>
+  </bpmn:process>
+</bpmn:definitions>

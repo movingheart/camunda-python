@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  targetNamespace="http://example">
+  <bpmn:process id="loan-process" name="贷款审批（决策表驱动）" isExecutable="true">
+    <bpmn:startEvent id="start"/>
+    <bpmn:businessRuleTask id="grade" name="评定等级" camunda:decisionRef="loan-grading" camunda:resultVariable="grade"/>
+    <bpmn:businessRuleTask id="discount" name="计算折扣" camunda:decisionRef="rate-discount"/>
+    <bpmn:exclusiveGateway id="review-gw" name="是否人工复核" default="f-auto"/>
+    <bpmn:userTask id="review" name="人工复核" camunda:assignee="reviewer"/>
+    <bpmn:endEvent id="review-end"/>
+    <bpmn:endEvent id="auto-end"/>
+    <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="grade"/>
+    <bpmn:sequenceFlow id="f2" sourceRef="grade" targetRef="discount"/>
+    <bpmn:sequenceFlow id="f3" sourceRef="discount" targetRef="review-gw"/>
+    <bpmn:sequenceFlow id="f-manual" sourceRef="review-gw" targetRef="review">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${grade == "C"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="f-auto" sourceRef="review-gw" targetRef="auto-end"/>
+    <bpmn:sequenceFlow id="f4" sourceRef="review" targetRef="review-end"/>
+  </bpmn:process>
+</bpmn:definitions>
