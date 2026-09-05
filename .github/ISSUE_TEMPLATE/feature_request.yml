@@ -1,0 +1,83 @@
+name: Feature Request
+description: 提议新功能或对现有功能的改进
+title: "[Feature] "
+labels: ["enhancement"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请描述你的需求。背景信息（Why）往往比实现细节（How）更重要。
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: 类别
+      description: 提议属于哪一类？
+      options:
+        - BPMN 引擎核心（流转 / 网关 / 事件 / 多实例 / 边界等）
+        - DMN 决策引擎（FEEL / hitPolicy / 业务规则任务）
+        - 持久化 / 恢复（store / schema / 多后端）
+        - 作业执行器（JobExecutor / 抢锁 / 续约）
+        - REST API（端点 / 异常 / 分页 / 鉴权）
+        - 文档 / 测试 / Demo
+        - 其他
+    validations:
+      required: true
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: 影响范围
+      options:
+        - 大（改动引擎核心行为）
+        - 中（扩展现有能力 / 新增一种语义）
+        - 小（新增端点 / 测试 / 文档 / 优化）
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 要解决的问题
+      description: 你的背景、痛点、希望引擎支持什么？避免直接说「加 X API」，而是描述场景
+      placeholder: |
+        目前用 XXX 写法很别扭，因为 YYY。
+        真实场景是 ZZZ（举一个具体例子）。
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 提议方案（可选）
+      description: 如果你已有想法，可以写在这里；不强求，懂业务不懂实现也行
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 考虑过的替代方案（可选）
+      description: 你研究过哪些 workaround？各自的优劣？
+    validations:
+      required: false
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: 代码 / BPMN 片段（可选）
+      description: 期望的「如果支持了会长这样」的示意
+      render: python
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 自检清单
+      options:
+        - label: 我查过 ARCHITECTURE.md，确认这功能当前确实未实现
+        - label: 我查过 USER_GUIDE.md 章节 16 常见坑 FAQ，确认不是已有功能被我漏掉
+        - label: 我能在 examples/run_*.py 找到能展示现有行为的 demo

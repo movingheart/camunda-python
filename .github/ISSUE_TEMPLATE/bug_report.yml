@@ -1,0 +1,111 @@
+name: Bug Report
+description: 报告一个 bug 或异常行为
+title: "[Bug] "
+labels: ["bug"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢报告问题！请尽量填全下面的模板，缺失的信息会导致排查变慢。
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 严重程度
+      description: 这个 bug 对你的影响有多大？
+      options:
+        - 严重（流程走不通 / 状态错乱 / 数据丢失）
+        - 中等（能跑但行为不对）
+        - 轻微（小瑕疵或文档/拼写错误）
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: camunda-python 版本
+      description: `python -c "import camunda; print(camunda.__version__)"` 的输出
+      placeholder: 0.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: python_version
+    attributes:
+      label: Python 版本
+      placeholder: 3.13.2
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: 操作系统
+      placeholder: macOS 14.5 / Ubuntu 22.04 / Windows 11
+    validations:
+      required: true
+
+  - type: dropdown
+    id: persistence
+    attributes:
+      label: 持久化后端
+      description: 用了哪种 store？
+      options:
+        - sqlite（默认内存版）
+        - sqlite + 文件
+        - PostgreSQL
+        - 没有用持久化
+        - 不确定
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      description: 最小可复现的代码或 BPMN 片段（越短越好）
+      placeholder: |
+        ```python
+        from camunda.engine import ProcessEngine
+        e = ProcessEngine()
+        # ... 你的代码
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+      description: 你认为应该发生什么？
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+      description: 实际发生了什么？贴完整的 traceback（如果有）
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志 / 错误输出
+      description: 完整的 stack trace 或日志片段
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 自检清单
+      options:
+        - label: 我已经搜过现有 issue，确认没有重复
+        - label: 我用的是最新 main 分支（`git pull` 后仍然复现）
+        - label: 我能在 `tests/unit/` 找到对应的失败测试（如果是测试 bug）
+        - label: 我能在 `examples/run_*.py` 找到对应的 demo（如果是 demo bug）

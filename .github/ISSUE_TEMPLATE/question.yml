@@ -1,0 +1,53 @@
+name: Question
+description: 提问（用法 / 设计意图 / 与 Camunda 7 的差异）
+title: "[Question] "
+labels: ["question"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        用法 / 设计问题直接问。先查 README / USER_GUIDE / ARCHITECTURE 三件套，
+        仍然找不到答案再来提问。
+
+  - type: dropdown
+    id: question_type
+    attributes:
+      label: 提问类型
+      options:
+        - 用法（怎么写 / 怎么跑）
+        - 设计意图（为什么这样实现 / 与 Camunda 7 的差异）
+        - 选型（什么时候该用 / 不该用）
+        - 故障排查（出错了但不知为什么）
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: 问题
+      description: 尽量具体：把场景说清楚，附上你尝试过的代码片段
+      placeholder: |
+        我想在 XXX 场景下用 camunda-python 做 YYY。
+        试过 ZZZ，但效果是 AAA。
+        想问的是 BBB。
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 背景（可选）
+      description: 真实业务场景，简化脱敏后贴出来
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 自检清单
+      options:
+        - label: 我搜过现有 issue（issue 标题 / label:question）
+        - label: 我翻过 docs/USER_GUIDE.md 相关章节
+        - label: 我翻过 docs/ARCHITECTURE.md 相关章节
