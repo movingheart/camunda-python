@@ -82,19 +82,27 @@ pip install -e ".[api]"          # 追加 fastapi/uvicorn/python-multipart/httpx
 pip install -e ".[dev,api]"
 ```
 
-### 2.5 切换到 PostgreSQL（生产）
+### 2.5 切换到生产数据库（PostgreSQL / MySQL）
 
-引擎默认 SQLite（`sqlite:///...`）。换 PG 只需在构造 `Store` 时改 URL：
+引擎默认 SQLite（`sqlite:///...`），生产建议换共享数据库。换库只需在构造
+`Store` 时改 URL（表结构由 SQLAlchemy 自动建，首次启动建好 ACT_RE/RU/HI
+三套表）：
 
 ```python
 from camunda.persistence.store import Store
-store = Store("postgresql+psycopg://user:pwd@host:5432/camunda")
+store = Store("postgresql+psycopg://user:pwd@host:5432/camunda")   # PostgreSQL
+store = Store("mysql+pymysql://user:pwd@host:3306/camunda")        # MySQL（需 pip install pymysql）
 ```
 
-表结构由 SQLAlchemy 自动建（`Base.metadata.create_all`），首次启动会建好 ACT_RE/RU/HI 三套表。**注意**：
+**注意**：
 
-- 当前 ORM 用的是 SQLite-friendly 类型映射，**切 PG 后建议自己跑一轮 `tests/` 确认无字段类型问题**（尤其 `Numeric` / `Boolean` 的边缘场景）。
-- 生产强烈建议加 `pool_pre_ping=True` 防止 PG 断连后僵尸连接。
+- **MySQL 大文本列**：MySQL 的 `TEXT` 上限 64KB，较大的 BPMN（XML > 64KB）
+  或大变量会报 `Data too long`。`entities.py` 已把这些列在 MySQL 方言下声明为
+  `MEDIUMTEXT`（16MB），**新建库无需手工处理**；旧库需 `ALTER TABLE` 或重建
+  （无迁移工具）。可跑 `scripts/verify_mysql_compat.py` 一键验证 >64KB XML 的
+  部署 / 读回 / 启动 / `from_database` 恢复全链路（真实 MySQL 上实测通过）。
+- 生产强烈建议 `pool_pre_ping=True` 防止断连后僵尸连接；当前 `Store()` 未内置
+  该参数，自行在 SQLAlchemy 侧扩展即可。
 
 ---
 
@@ -155,7 +163,8 @@ from camunda.engine import ProcessEngine
 with open("hello.bpmn") as f:
     model = parse_bpmn_xml(f.read(), source_name="hello.bpmn")
 
-# 2) 起引擎 + 注册 delegate（service task 实际干活的 Python 函数）
+# 2) 创建引擎（嵌入式库对象，构造即 ready，无后台线程 / 无需"启动"）
+#    + 注册 delegate（service task 实际干活的 Python 函数）
 engine = ProcessEngine()
 engine.register_delegate("greeter", lambda variables: variables.update(greeting="hi from python"))
 
@@ -179,7 +188,8 @@ python run_hello.py
 start  ──>  service task (greeter delegate)  ──>  end
    │              │
    │              └─ delegate 修改 variables：注入 greeting
-   └─ instance 进入 RUNNING
+   └─ instance 创建即进入 ACTIVE（进行中；全同步流程下该状态只存在于
+      start_process_instance_by_key 调用内部，返回时已是 COMPLETED）
    ────────────────> instance 进入 COMPLETED
 ```
 

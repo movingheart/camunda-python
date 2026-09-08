@@ -737,7 +737,7 @@ delegate 注册不落库（对齐 Spring bean 语义），恢复后需自行 `re
 | 决策点 | 结论 | 说明 |
 |---|---|---|
 | 对齐目标 | **语义对齐为主** | 行为/状态机/持久化契约对齐，REST API 兼容层 M6 后置 |
-| 持久化 | **SQLAlchemy 2.0** | ORM + SQLite(dev)/PostgreSQL(prod) 双方言；M2 引入，先留接口 |
+| 持久化 | **SQLAlchemy 2.0** | ORM + SQLite(dev) / PostgreSQL / MySQL(prod) 三方言；MySQL 大文本列方言映射 MEDIUMTEXT（>64KB XML）；M2 引入 |
 | BPMN 解析 | **lxml 自研解析器** | 构建 BpmnModelInstance 等价物，完全掌控模型层 |
 | 表达式 | 自研安全子集 | M1 简化：支持 `${x > 3}` 类条件，M4 完善 |
 | ID 生成 | UUID | 对齐 ACT 表主键语义 |
