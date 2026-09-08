@@ -179,6 +179,27 @@ def _now() -> str:
     return clock.now()
 
 
+def _resolve_auth_expression(
+    raw: str, variables: Dict[str, Any]
+) -> Any:
+    """任务归属表达式的「字面量 vs 表达式」分派。
+
+    仅 ``${expr}`` 包裹的字符串走 evaluate_expression；裸文本（如用户名
+    ``alice`` / 组 ``finance``）按字面量返回（不查变量表，避免把字面量误
+    当未定义变量抛错）。表达式变量缺失返回 None，由调用方决定降级策略。
+    """
+    text = raw.strip()
+    if not text:
+        return None
+    if text.startswith("${") and text.endswith("}"):
+        try:
+            return evaluate_expression(text, variables)
+        except ProcessInstanceException:
+            return None
+    # 裸文本：字面量（如候选人用户名 / 角色组名）
+    return text
+
+
 # M3：单条作业执行失败不阻塞整轮轮询（对齐 Camunda JobExecutor 行为）
 logger = logging.getLogger(__name__)
 
@@ -2456,19 +2477,65 @@ class ProcessEngine:
         token.open_activity = None
 
     def _create_task(self, pi: ProcessInstance, token: Execution, node: UserTask) -> Task:
+        # 任务归属扩展属性求值：UserTask.assignee / candidate_users /
+        # candidate_groups 在 parser 阶段抽为字符串列表，每项可为字面量或
+        # ${expr}。这里逐项 evaluate_expression：返回值为列表则展平，否则
+        # 作为单条候选；assignee 仅取第一项（标量）。
+        assignee = self._resolve_assignee(pi, node.assignee)
+        candidate_users = self._resolve_candidates(pi, node.candidate_users)
+        candidate_groups = self._resolve_candidates(pi, node.candidate_groups)
         task = Task(
             id=self._idgen.next_id(),
             name=node.name,
             process_instance_id=pi.id,
             execution_id=token.id,
             task_definition_key=node.id,
-            assignee=node.assignee,
-            candidate_users=list(node.candidate_users),
-            candidate_groups=list(node.candidate_groups),
+            assignee=assignee,
+            candidate_users=candidate_users,
+            candidate_groups=candidate_groups,
             create_time=_now(),
         )
         self._tasks[task.id] = task
         return task
+
+    @staticmethod
+    def _resolve_assignee(pi: ProcessInstance, raw: Optional[str]) -> Optional[str]:
+        """``camunda:assignee`` 求值。
+
+        只对 ``${expr}`` 形式的表达式调用 evaluate_expression；非包裹的纯文本
+        （如 ``"alice"``）按字面量返回（Camunda 7 行为：assignee 字面量直接
+        作为用户 ID）。
+        """
+        if not raw:
+            return None
+        value = _resolve_auth_expression(raw, pi.variables)
+        if value is None:
+            return None
+        return str(value)
+
+    @staticmethod
+    def _resolve_candidates(
+        pi: ProcessInstance, raws: List[str]
+    ) -> List[str]:
+        """``camunda:candidateUsers`` / ``candidateGroups`` 求值。
+
+        每个条目独立求值：``${expr}`` 形式对 ``pi.variables`` 求值，结果为列表
+        则展平、None 丢弃；纯文本（无 ``${}`` 包裹）按字面量作为唯一候选。
+        表达式变量缺失时静默跳过该条（不阻塞 userTask 进入）。
+        """
+        out: List[str] = []
+        for raw in raws:
+            value = _resolve_auth_expression(raw, pi.variables)
+            if value is None:
+                continue
+            if isinstance(value, (list, tuple, set)):
+                for item in value:
+                    if item is None:
+                        continue
+                    out.append(str(item))
+            else:
+                out.append(str(value))
+        return out
 
     def _run_delegate(self, pi: ProcessInstance, token: Execution, node: ServiceTask) -> None:
         ref = node.implementation_ref

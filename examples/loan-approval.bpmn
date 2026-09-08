@@ -4,7 +4,7 @@
     <bpmn:startEvent id="start" name="提交申请" />
     <bpmn:serviceTask id="check-credit" name="信用额度校验" camunda:delegateExpression="${checkCredit}" />
     <bpmn:exclusiveGateway id="amount-gateway" name="金额判断" default="flow-auto-pass" />
-    <bpmn:userTask id="manual-review" name="人工审批" camunda:assignee="manager" />
+    <bpmn:userTask id="manual-review" name="人工审批" />
     <bpmn:exclusiveGateway id="decision-gateway" name="审批结果" default="flow-reject" />
     <bpmn:endEvent id="end-approved" name="已批准" />
     <bpmn:endEvent id="end-rejected" name="已拒绝" />

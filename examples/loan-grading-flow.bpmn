@@ -8,7 +8,7 @@
     <bpmn:businessRuleTask id="grade" name="评定等级" camunda:decisionRef="loan-grading" camunda:resultVariable="grade"/>
     <bpmn:businessRuleTask id="discount" name="计算折扣" camunda:decisionRef="rate-discount"/>
     <bpmn:exclusiveGateway id="review-gw" name="是否人工复核" default="f-auto"/>
-    <bpmn:userTask id="review" name="人工复核" camunda:assignee="reviewer"/>
+    <bpmn:userTask id="review" name="人工复核"/>
     <bpmn:endEvent id="review-end"/>
     <bpmn:endEvent id="auto-end"/>
     <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="grade"/>

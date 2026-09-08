@@ -7,7 +7,7 @@
       </bpmn:timerEventDefinition>
     </bpmn:startEvent>
     <bpmn:serviceTask id="scan" name="健康扫描" camunda:asyncBefore="true" camunda:delegateExpression="${healthScan}" />
-    <bpmn:userTask id="review" name="人工复核" camunda:assignee="ops" />
+    <bpmn:userTask id="review" name="人工复核" />
     <bpmn:intermediateCatchEvent id="cooldown" name="冷却 3 秒">
       <bpmn:timerEventDefinition>
         <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT3S</bpmn:timeDuration>

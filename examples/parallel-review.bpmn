@@ -3,8 +3,8 @@
   <bpmn:process id="parallel-review" name="双人并行审批" isExecutable="true">
     <bpmn:startEvent id="start" name="发起" />
     <bpmn:parallelGateway id="fork" name="并行分发" />
-    <bpmn:userTask id="review-a" name="审批人 A" camunda:assignee="userA" />
-    <bpmn:userTask id="review-b" name="审批人 B" camunda:assignee="userB" />
+    <bpmn:userTask id="review-a" name="审批人 A" />
+    <bpmn:userTask id="review-b" name="审批人 B" />
     <bpmn:parallelGateway id="join" name="并行汇聚" />
     <bpmn:endEvent id="end" name="结束" />
     <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="fork" />

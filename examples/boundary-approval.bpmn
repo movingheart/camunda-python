@@ -10,7 +10,7 @@
                       camunda:asyncAfter="true"
                       camunda:delegateExpression="${auditSubmit}"/>
     <!-- 人工审批：挂在审批任务上的超时边界（2 秒未处理 -> 自动降级） -->
-    <bpmn:userTask id="approve" name="人工审批" camunda:assignee="manager"/>
+    <bpmn:userTask id="approve" name="人工审批"/>
     <bpmn:boundaryEvent id="timeout" name="审批超时" attachedToRef="approve" cancelActivity="true">
       <bpmn:timerEventDefinition>
         <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT2S</bpmn:timeDuration>
