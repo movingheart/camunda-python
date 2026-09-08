@@ -4,13 +4,28 @@ version = "0.1.0"
 description = "Python3 reimplementation of Camunda 7 BPMN engine (semantic-aligned, Apache-2.0 independent implementation)"
 readme = "README.md"
 requires-python = ">=3.12"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 authors = [{ name = "yingwang" }]
+keywords = ["bpmn", "camunda", "workflow", "process-engine", "workflow-engine"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
     "lxml>=5.0",
     "sqlalchemy>=2.0",
     "croniter>=2.0",  # M3: timerCycle 的 cron 表达式求值
 ]
+
+# 发布前建议补充源码仓库地址（当前 git 无 remote，未填写）：
+# [project.urls]
+# Homepage = "https://github.com/<owner>/camunda-python"
+# Source = "https://github.com/<owner>/camunda-python"
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "pytest-cov>=5.0"]
