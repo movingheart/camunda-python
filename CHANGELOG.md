@@ -6,6 +6,33 @@
 
 ## [Unreleased]
 
+### Added
+- 示例流程图补充 BPMN-DI 绘图信息（`timer-billing.bpmn` / `timer-inspection.bpmn`）：
+  形状坐标与连线 waypoint 齐全，Camunda Modeler 可直接完整渲染
+
+### Changed
+- `USER_GUIDE.md` §3.2/§3.4 措辞修正：`ProcessEngine()` 为嵌入式库对象
+  （构造即 ready、无后台线程），不表述为"起引擎"；实例进行中状态用
+  `ACTIVE`（代码枚举中无 `RUNNING`），并说明全同步流程下该状态仅在
+  `start_process_instance_by_key` 调用内部可见
+
+### Fixed
+- Windows 下演示脚本删除 SQLite 库报 `PermissionError: [WinError 32]`（文件句柄
+  被连接池占用）：`Store` 新增 `close()`（`engine.dispose()`）与上下文管理器，
+  `ProcessEngine` 新增 `close()` 转发释放 store；`run_timer_demo.py` /
+  `run_msg_sig_demo.py` 在删库前显式关闭引擎连接，`test_business_rule_task.py`
+  在临时目录清理前显式关闭连接
+- 演示脚本在 Windows GBK 控制台打印 ✅ 报 `UnicodeEncodeError`：stdout 强制
+  UTF-8（`run_timer_demo.py` / `run_msg_sig_demo.py` / `run_api_demo.py`）
+- MySQL 方言下 `TEXT` 上限 64KB：部署较大的 BPMN（XML > 64KB）或写入大变量报
+  `Data too long for column 'RESOURCE_XML_'`。`entities.py` 大文本列
+  （`RESOURCE_XML_` / `MI_` / RU、HI 的 `TEXT_` / `REPEAT_`）改用
+  `BIG_TEXT = Text().with_variant(MEDIUMTEXT(), "mysql")`，在 MySQL 声明为
+  MEDIUMTEXT（16MB）；SQLite / PostgreSQL 行为不变（Text 无长度限制，旧库在
+  MySQL 上需 ALTER 或重建）。新增 `scripts/verify_mysql_compat.py`：真实 MySQL
+  上验证 >64KB XML 的部署 / 读回 / 启动 / `from_database` 恢复全链路
+  （MySQL 8 实测通过，`--local` 可在 SQLite 冒烟）；文档同步 §2.5 三方言说明
+
 ### Planned
 - M9.1 REST API 鉴权中间件（OAuth2 / API Key，二选一由用户定）
 - M9.2 外部任务（external task）拉模式（对齐 Camunda 7 long polling）
