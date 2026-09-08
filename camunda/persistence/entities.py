@@ -16,7 +16,14 @@ M2 差异说明（文档化）：
 from __future__ import annotations
 
 from sqlalchemy import Integer, String, Text
+from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+# MySQL 方言下 TEXT 上限 64KB（65535 字节），BPMN 资源 XML 与变量 JSON 可能
+# 超限（MySQL 报 Data too long）；此处统一把大文本列在 MySQL 声明为
+# MEDIUMTEXT（16MB）。SQLite/PostgreSQL 的 Text 无长度限制，with_variant
+# 不影响这两者。无迁移工具：MySQL 上需 DROP 重建或手动 ALTER 已有列。
+BIG_TEXT = Text().with_variant(MEDIUMTEXT(), "mysql")
 
 
 class Base(DeclarativeBase):
@@ -49,7 +56,7 @@ class ProcDefEntity(Base):
     name_: Mapped[str | None] = mapped_column("NAME_", String(255), nullable=True)
     version_: Mapped[int] = mapped_column("VERSION_", default=1)
     deployment_id_: Mapped[str] = mapped_column("DEPLOYMENT_ID_", String(64))
-    resource_xml_: Mapped[str] = mapped_column("RESOURCE_XML_", Text)
+    resource_xml_: Mapped[str] = mapped_column("RESOURCE_XML_", BIG_TEXT)
     is_executable_: Mapped[bool] = mapped_column("IS_EXECUTABLE_", default=True)
 
 
@@ -72,7 +79,7 @@ class ExecutionEntity(Base):
     # M4-2c4：多实例状态 JSON（容器 total/active/completed/next_index/... 或实例
     # {"index": i}）。Camunda 以 loopCounter 等 ACT_RU_VARIABLE + IS_SCOPE_ 关联
     # 表达；M2 简化：实例级变量 + 此列直存容器状态（崩溃恢复必需）。
-    mi_: Mapped[str | None] = mapped_column("MI_", Text, nullable=True)
+    mi_: Mapped[str | None] = mapped_column("MI_", BIG_TEXT, nullable=True)
     # Camunda 还有 IS_CONCURRENT_ / IS_SCOPE_ 等；role 已覆盖 M1 语义
 
 
@@ -99,7 +106,7 @@ class VariableEntity(Base):
     process_instance_id_: Mapped[str] = mapped_column("PROC_INST_ID_", String(64), index=True)
     name_: Mapped[str] = mapped_column("NAME_", String(255))
     type_: Mapped[str] = mapped_column("TYPE_", String(32))          # Java 类型名
-    text_: Mapped[str | None] = mapped_column("TEXT_", Text, nullable=True)  # JSON 序列化
+    text_: Mapped[str | None] = mapped_column("TEXT_", BIG_TEXT, nullable=True)  # JSON 序列化
 
 
 class JobEntity(Base):
@@ -129,7 +136,7 @@ class JobEntity(Base):
     duedate_: Mapped[str] = mapped_column("DUEDATE_", String(32), index=True)
     created_: Mapped[str] = mapped_column("CREATED_", String(32))
     retries_: Mapped[int] = mapped_column("RETRIES_", Integer, default=3)
-    repeat_: Mapped[str | None] = mapped_column("REPEAT_", Text, nullable=True)  # JSON
+    repeat_: Mapped[str | None] = mapped_column("REPEAT_", BIG_TEXT, nullable=True)  # JSON
     lock_owner_: Mapped[str | None] = mapped_column(
         "LOCK_OWNER_", String(255), nullable=True
     )
@@ -192,4 +199,4 @@ class HistVarInstEntity(Base):
     process_instance_id_: Mapped[str] = mapped_column("PROC_INST_ID_", String(64), index=True)
     name_: Mapped[str] = mapped_column("NAME_", String(255))
     type_: Mapped[str] = mapped_column("TYPE_", String(32))
-    text_: Mapped[str | None] = mapped_column("TEXT_", Text, nullable=True)
+    text_: Mapped[str | None] = mapped_column("TEXT_", BIG_TEXT, nullable=True)
