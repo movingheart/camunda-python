@@ -1,21 +1,79 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
-                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
-                  targetNamespace="http://example.camunda.python/parallel">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" targetNamespace="http://example.camunda.python/parallel" exporter="Camunda Modeler" exporterVersion="5.50.1">
   <bpmn:process id="parallel-review" name="双人并行审批" isExecutable="true">
-    <bpmn:startEvent id="start" name="发起"/>
-    <!-- 并行网关：同时发两个独立审批任务 -->
-    <bpmn:parallelGateway id="fork" name="并行分发"/>
-    <bpmn:userTask id="review-a" name="审批人 A"/>
-    <bpmn:userTask id="review-b" name="审批人 B"/>
-    <bpmn:parallelGateway id="join" name="并行汇聚"/>
-    <bpmn:endEvent id="end" name="结束"/>
-
-    <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="fork"/>
-    <bpmn:sequenceFlow id="f2" sourceRef="fork" targetRef="review-a"/>
-    <bpmn:sequenceFlow id="f3" sourceRef="fork" targetRef="review-b"/>
-    <bpmn:sequenceFlow id="f4" sourceRef="review-a" targetRef="join"/>
-    <bpmn:sequenceFlow id="f5" sourceRef="review-b" targetRef="join"/>
-    <bpmn:sequenceFlow id="f6" sourceRef="join" targetRef="end"/>
+    <bpmn:startEvent id="start" name="发起" />
+    <bpmn:parallelGateway id="fork" name="并行分发" />
+    <bpmn:userTask id="review-a" name="审批人 A" camunda:assignee="userA" />
+    <bpmn:userTask id="review-b" name="审批人 B" camunda:assignee="userB" />
+    <bpmn:parallelGateway id="join" name="并行汇聚" />
+    <bpmn:endEvent id="end" name="结束" />
+    <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="fork" />
+    <bpmn:sequenceFlow id="f2" sourceRef="fork" targetRef="review-a" />
+    <bpmn:sequenceFlow id="f3" sourceRef="fork" targetRef="review-b" />
+    <bpmn:sequenceFlow id="f4" sourceRef="review-a" targetRef="join" />
+    <bpmn:sequenceFlow id="f5" sourceRef="review-b" targetRef="join" />
+    <bpmn:sequenceFlow id="f6" sourceRef="join" targetRef="end" />
   </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="parallel-review">
+      <bpmndi:BPMNShape id="shape_fork" bpmnElement="fork">
+        <dc:Bounds x="280" y="140" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="331" y="152" width="44" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_review_a" bpmnElement="review-a">
+        <dc:Bounds x="420" y="60" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_review_b" bpmnElement="review-b">
+        <dc:Bounds x="420" y="180" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_join" bpmnElement="join">
+        <dc:Bounds x="580" y="140" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="526" y="158" width="44" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_start" bpmnElement="start">
+        <dc:Bounds x="160" y="150" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="167" y="189" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_end" bpmnElement="end">
+        <dc:Bounds x="720" y="150" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="727" y="189" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="edge_f1" bpmnElement="f1">
+        <di:waypoint x="196" y="167" />
+        <di:waypoint x="282" y="167" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_f2" bpmnElement="f2">
+        <di:waypoint x="305" y="140" />
+        <di:waypoint x="350" y="100" />
+        <di:waypoint x="420" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_f3" bpmnElement="f3">
+        <di:waypoint x="305" y="190" />
+        <di:waypoint x="340" y="220" />
+        <di:waypoint x="420" y="220" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_f4" bpmnElement="f4">
+        <di:waypoint x="520" y="100" />
+        <di:waypoint x="605" y="100" />
+        <di:waypoint x="605" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_f5" bpmnElement="f5">
+        <di:waypoint x="520" y="220" />
+        <di:waypoint x="605" y="220" />
+        <di:waypoint x="605" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_f6" bpmnElement="f6">
+        <di:waypoint x="628" y="167" />
+        <di:waypoint x="720" y="167" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
 </bpmn:definitions>

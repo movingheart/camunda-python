@@ -1,32 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
-                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
-                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                  targetNamespace="http://example.camunda.python/timer">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" targetNamespace="http://example.camunda.python/timer">
   <bpmn:process id="scheduled-inspection" name="定时巡检流程" isExecutable="true">
-    <!-- 定时启动：部署 2 秒后自动开始一次巡检（timeDuration 相对延迟） -->
     <bpmn:startEvent id="kickoff" name="定时开始">
       <bpmn:timerEventDefinition>
         <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT2S</bpmn:timeDuration>
       </bpmn:timerEventDefinition>
     </bpmn:startEvent>
-    <!-- 健康扫描：asyncBefore -> 节点行为由 async-continuation 作业执行 -->
-    <bpmn:serviceTask id="scan" name="健康扫描"
-                      camunda:asyncBefore="true"
-                      camunda:delegateExpression="${healthScan}"/>
-    <!-- 人工复核 -->
-    <bpmn:userTask id="review" name="人工复核" camunda:assignee="ops"/>
-    <!-- 冷却等待：timer 中间捕获（timeDuration），到期自动继续 -->
+    <bpmn:serviceTask id="scan" name="健康扫描" camunda:asyncBefore="true" camunda:delegateExpression="${healthScan}" />
+    <bpmn:userTask id="review" name="人工复核" camunda:assignee="ops" />
     <bpmn:intermediateCatchEvent id="cooldown" name="冷却 3 秒">
       <bpmn:timerEventDefinition>
         <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT3S</bpmn:timeDuration>
       </bpmn:timerEventDefinition>
     </bpmn:intermediateCatchEvent>
-    <bpmn:endEvent id="done" name="巡检完成"/>
-
-    <bpmn:sequenceFlow id="f-kick" sourceRef="kickoff" targetRef="scan"/>
-    <bpmn:sequenceFlow id="f-scan" sourceRef="scan" targetRef="review"/>
-    <bpmn:sequenceFlow id="f-rev" sourceRef="review" targetRef="cooldown"/>
-    <bpmn:sequenceFlow id="f-cool" sourceRef="cooldown" targetRef="done"/>
+    <bpmn:endEvent id="done" name="巡检完成" />
+    <bpmn:sequenceFlow id="f-kick" sourceRef="kickoff" targetRef="scan" />
+    <bpmn:sequenceFlow id="f-scan" sourceRef="scan" targetRef="review" />
+    <bpmn:sequenceFlow id="f-rev" sourceRef="review" targetRef="cooldown" />
+    <bpmn:sequenceFlow id="f-cool" sourceRef="cooldown" targetRef="done" />
   </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="scheduled-inspection">
+      <bpmndi:BPMNShape id="shape_scan" bpmnElement="scan">
+        <dc:Bounds x="160" y="110" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_review" bpmnElement="review">
+        <dc:Bounds x="300" y="110" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_kickoff" bpmnElement="kickoff">
+        <dc:Bounds x="60" y="135" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="56" y="173" width="45" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_cooldown" bpmnElement="cooldown">
+        <dc:Bounds x="440" y="136" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="435" y="175" width="46" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_done" bpmnElement="done">
+        <dc:Bounds x="580" y="136" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="576" y="176" width="45" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="edge_f_kick" bpmnElement="f-kick">
+        <di:waypoint x="96" y="152" />
+        <di:waypoint x="160" y="152" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_f_scan" bpmnElement="f-scan">
+        <di:waypoint x="260" y="150" />
+        <di:waypoint x="300" y="150" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_f_rev" bpmnElement="f-rev">
+        <di:waypoint x="400" y="153" />
+        <di:waypoint x="440" y="153" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_f_cool" bpmnElement="f-cool">
+        <di:waypoint x="476" y="154" />
+        <di:waypoint x="580" y="154" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
 </bpmn:definitions>

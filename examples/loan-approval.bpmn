@@ -1,34 +1,107 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
-                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
-                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                  targetNamespace="http://example.camunda.python/loan">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" targetNamespace="http://example.camunda.python/loan" exporter="Camunda Modeler" exporterVersion="5.50.1">
   <bpmn:process id="loan-approval" name="贷款审批流程" isExecutable="true">
-    <!-- start -->
-    <bpmn:startEvent id="start" name="提交申请"/>
-    <!-- 额度校验：服务任务（delegate 名 checkCredit） -->
-    <bpmn:serviceTask id="check-credit" name="信用额度校验"
-                      camunda:delegateExpression="${checkCredit}"/>
-    <!-- 排他网关：金额 >= 10000 走人工审批，否则自动通过 -->
-    <bpmn:exclusiveGateway id="amount-gateway" name="金额判断" default="flow-auto-pass"/>
-    <bpmn:userTask id="manual-review" name="人工审批"
-                   camunda:assignee="manager"/>
-    <!-- 审批结果判断 -->
-    <bpmn:exclusiveGateway id="decision-gateway" name="审批结果" default="flow-reject"/>
-    <bpmn:endEvent id="end-approved" name="已批准"/>
-    <bpmn:endEvent id="end-rejected" name="已拒绝"/>
-
-    <!-- flows -->
-    <bpmn:sequenceFlow id="flow-start" sourceRef="start" targetRef="check-credit"/>
-    <bpmn:sequenceFlow id="flow-check" sourceRef="check-credit" targetRef="amount-gateway"/>
+    <bpmn:startEvent id="start" name="提交申请" />
+    <bpmn:serviceTask id="check-credit" name="信用额度校验" camunda:delegateExpression="${checkCredit}" />
+    <bpmn:exclusiveGateway id="amount-gateway" name="金额判断" default="flow-auto-pass" />
+    <bpmn:userTask id="manual-review" name="人工审批" camunda:assignee="manager" />
+    <bpmn:exclusiveGateway id="decision-gateway" name="审批结果" default="flow-reject" />
+    <bpmn:endEvent id="end-approved" name="已批准" />
+    <bpmn:endEvent id="end-rejected" name="已拒绝" />
+    <bpmn:sequenceFlow id="flow-start" sourceRef="start" targetRef="check-credit" />
+    <bpmn:sequenceFlow id="flow-check" sourceRef="check-credit" targetRef="amount-gateway" />
     <bpmn:sequenceFlow id="flow-manual" name="金额超限" sourceRef="amount-gateway" targetRef="manual-review">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${amount >= 10000}</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${amount &gt;= 10000}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="flow-auto-pass" name="自动通过" sourceRef="amount-gateway" targetRef="end-approved"/>
-    <bpmn:sequenceFlow id="flow-review" sourceRef="manual-review" targetRef="decision-gateway"/>
+    <bpmn:sequenceFlow id="flow-auto-pass" name="自动通过" sourceRef="amount-gateway" targetRef="end-approved" />
+    <bpmn:sequenceFlow id="flow-review" sourceRef="manual-review" targetRef="decision-gateway" />
     <bpmn:sequenceFlow id="flow-approve" name="同意" sourceRef="decision-gateway" targetRef="end-approved">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approved == true}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="flow-reject" name="拒绝" sourceRef="decision-gateway" targetRef="end-rejected"/>
+    <bpmn:sequenceFlow id="flow-reject" name="拒绝" sourceRef="decision-gateway" targetRef="end-rejected" />
   </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="loan-approval">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="start">
+        <dc:Bounds x="150" y="185" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="147" y="221" width="44" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_check-credit" bpmnElement="check-credit">
+        <dc:Bounds x="250" y="160" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_amount-gateway" bpmnElement="amount-gateway" isMarkerVisible="true">
+        <dc:Bounds x="410" y="180" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="413" y="230" width="44" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_decision-gateway" bpmnElement="decision-gateway" isMarkerVisible="true">
+        <dc:Bounds x="710" y="100" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="713" y="76" width="44" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_end-rejected" bpmnElement="end-rejected">
+        <dc:Bounds x="850" y="242" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="852" y="278" width="33" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_manual-review" bpmnElement="manual-review">
+        <dc:Bounds x="530" y="85" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_end-approved" bpmnElement="end-approved">
+        <dc:Bounds x="850" y="110" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="893" y="118" width="33" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_flow-start" bpmnElement="flow-start">
+        <di:waypoint x="186" y="202" />
+        <di:waypoint x="250" y="202" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_flow-check" bpmnElement="flow-check">
+        <di:waypoint x="350" y="200" />
+        <di:waypoint x="410" y="205" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_flow-manual" bpmnElement="flow-manual">
+        <di:waypoint x="435" y="180" />
+        <di:waypoint x="435" y="125" />
+        <di:waypoint x="530" y="125" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="450" y="101" width="60" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_flow-auto-pass" bpmnElement="flow-auto-pass">
+        <di:waypoint x="448" y="217" />
+        <di:waypoint x="620" y="290" />
+        <di:waypoint x="780" y="290" />
+        <di:waypoint x="865" y="146" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="678" y="263" width="44" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_flow-review" bpmnElement="flow-review">
+        <di:waypoint x="630" y="125" />
+        <di:waypoint x="710" y="125" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_flow-approve" bpmnElement="flow-approve">
+        <di:waypoint x="758" y="127" />
+        <di:waypoint x="850" y="127" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="794" y="103" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_flow-reject" bpmnElement="flow-reject">
+        <di:waypoint x="735" y="150" />
+        <di:waypoint x="735" y="220" />
+        <di:waypoint x="850" y="257" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="748" y="228" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
 </bpmn:definitions>
