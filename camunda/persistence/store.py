@@ -1,4 +1,4 @@
-"""持久化存取：快照同步 + SQLite/PostgreSQL 支持（M2）。
+"""持久化存取：快照同步 + SQLite/PostgreSQL/MySQL 支持（M2）。
 
 同步策略（事务边界同步，文档化）：
 - M1 引擎在内存推进（事件队列 pump），M2 在**每个命令边界**
@@ -111,7 +111,8 @@ class ProcInstSnap:
 # Store
 # ---------------------------------------------------------------------------
 class Store:
-    """ACT 表存取门面。url 形如 sqlite:///abs/path 或 postgresql+psycopg://...
+    """ACT 表存取门面。url 形如 sqlite:///abs/path、postgresql+psycopg://...、
+    mysql+pymysql://...（MySQL 需 pip install pymysql）。
 
     兼容裸文件路径（如 /tmp/camunda.db）：自动归一化为 sqlite:/// 绝对路径，
     方便测试与命令行直接传 db 路径而不用拼 scheme。
@@ -121,6 +122,22 @@ class Store:
         self.url = self._normalize_url(url)
         self._engine = create_engine(self.url, future=True)
         Base.metadata.create_all(self._engine)  # M2：无迁移工具，建表即对齐 schema
+
+    # ---- 生命周期 ----
+    def close(self) -> None:
+        """释放底层连接池（关闭所有打开的 DBAPI 连接）。
+
+        Windows 上 SQLite 文件句柄由池中连接持有，删除/移动 db 文件前
+        必须先 close()，否则报 PermissionError [WinError 32]；关闭后本对象
+        不应再用于任何读写。
+        """
+        self._engine.dispose()
+
+    def __enter__(self) -> "Store":
+        return self
+
+    def __exit__(self, *exc: Any) -> None:
+        self.close()
 
     @staticmethod
     def _normalize_url(url: str) -> str:

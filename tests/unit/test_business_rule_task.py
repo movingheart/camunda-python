@@ -153,3 +153,7 @@ def test_dmn_deploy_not_persisted_documented():
         # 重新部署后恢复
         e2.deploy_dmn(parse_dmn_xml(DMN))
         assert e2.evaluate_decision("loan-grade", {"amount": 1}) == "A"
+        # Windows：SQLite 文件句柄由连接池持有，TemporaryDirectory 清理（rmtree）
+        # 发生在函数内 with 块退出时，必须先释放连接（POSIX 可删被打开文件故此前未暴露）
+        e1._store.close()
+        e2.close()

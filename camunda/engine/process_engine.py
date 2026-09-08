@@ -2627,6 +2627,16 @@ class ProcessEngine:
             engine._restore_instance(snap)
         return engine
 
+    def close(self) -> None:
+        """释放持久化连接（store 模式）；纯内存引擎为无操作。
+
+        演示 / 测试在删除 db 文件前必须调用（Windows 下 SQLite 文件句柄
+        由连接池持有，不释放则 unlink 报 PermissionError）；关闭后引擎
+        不应再执行任何命令。
+        """
+        if self._store is not None:
+            self._store.close()
+
     def _restore_instance(self, snap: "ProcInstSnap") -> None:
         """把库中活跃实例快照重建为内存运行时态。"""
         # 根 = parent_id 为空的 execution（RU 行父在前已保证插入顺序）
