@@ -103,6 +103,21 @@ def parse_bpmn_file(path: str) -> BpmnModel:
         return parse_bpmn_xml(f.read(), source_name=path)
 
 
+def _split_candidate_list(raw: str) -> List[str]:
+    """拆分 ``camunda:candidateUsers`` / ``candidateGroups`` 属性值。
+
+    Camunda 7 支持逗号/分号混用；本项目统一按 ``,`` / ``;`` 切分并去空白去空项。
+    返回值保留为表达式原文（可能是字面量用户名，也可能是 ``${var}``），由
+    引擎在 ``_create_task`` 阶段对每项调用 ``evaluate_expression`` 求值。
+    """
+    parts: List[str] = []
+    for chunk in raw.replace(";", ",").split(","):
+        item = chunk.strip()
+        if item:
+            parts.append(item)
+    return parts
+
+
 # ---------------------------------------------------------------------------
 # Process 解析
 # ---------------------------------------------------------------------------
@@ -353,6 +368,22 @@ def _parse_flow_node(
             or node.extension.get("resultVariable")
             or "result"
         )
+
+    # userTask：任务归属扩展属性（assignee / candidateUsers / candidateGroups）
+    # Camunda 7 风格：值可为 ${expr}（运行时由引擎对流程变量求值）或逗号分隔的
+    # 字面量列表。本项目仅做抽取，${...} 求值由引擎在 _create_task 阶段完成。
+    if isinstance(node, UserTask):
+        raw_assignee = camunda_attrs.get("assignee") or node.extension.get("assignee")
+        if raw_assignee:
+            node.assignee = raw_assignee.strip()
+        raw_users = camunda_attrs.get("candidateUsers") or node.extension.get("candidateUsers")
+        if raw_users:
+            node.candidate_users = _split_candidate_list(raw_users)
+        raw_groups = (
+            camunda_attrs.get("candidateGroups") or node.extension.get("candidateGroups")
+        )
+        if raw_groups:
+            node.candidate_groups = _split_candidate_list(raw_groups)
 
     # 其余 camunda 属性并入 extension（供未来里程碑使用）
     if camunda_attrs:

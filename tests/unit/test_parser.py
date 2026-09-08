@@ -112,3 +112,33 @@ def test_dangling_flow_reference_raises():
 """
     with pytest.raises(DeploymentException, match="ghost"):
         parse_bpmn_xml(xml)
+
+
+def test_user_task_authorization_attrs():
+    """userTask 上的 camunda:assignee / candidateUsers / candidateGroups
+    应当被解析进 UserTask 字段；多值按逗号或分号拆分。"""
+    xml = """<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  targetNamespace="http://example">
+  <bpmn:process id="p" isExecutable="true">
+    <bpmn:startEvent id="s"/>
+    <bpmn:userTask id="t1" name="直属上级审批"
+        camunda:assignee="${startBy}"
+        camunda:candidateUsers="${leader_users},alice"
+        camunda:candidateGroups="manager;${fallback_group}"/>
+    <bpmn:endEvent id="e"/>
+    <bpmn:sequenceFlow id="f1" sourceRef="s" targetRef="t1"/>
+    <bpmn:sequenceFlow id="f2" sourceRef="t1" targetRef="e"/>
+  </bpmn:process>
+</bpmn:definitions>
+"""
+    model = parse_bpmn_xml(xml)
+    proc = model.processes[0]
+    t1 = proc.flow_nodes["t1"]
+    assert isinstance(t1, UserTask)
+    # 表达式原样保留（求值由引擎 _create_task 阶段完成）
+    assert t1.assignee == "${startBy}"
+    # 逗号+分号混合拆分
+    assert t1.candidate_users == ["${leader_users}", "alice"]
+    assert t1.candidate_groups == ["manager", "${fallback_group}"]
