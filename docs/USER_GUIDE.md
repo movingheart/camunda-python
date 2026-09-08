@@ -827,7 +827,7 @@ print(pi.variables["grade"])   # "C" — 决策结果写入 resultVariable，可
 | `not(>500)` | 取反 |
 | `-` / 空 | 通配（任意值） |
 
-完整 FEEL 子集见 [docs/ARCHITECTURE.md § M5](ARCHITECTURE.md#m5-交付记录)。
+完整 FEEL 子集见 [docs/ARCHITECTURE.md § 与 Camunda 7 的差异](ARCHITECTURE.md#4-与-camunda-7-的差异)。
 
 ### 13.5 hitPolicy 选择
 
