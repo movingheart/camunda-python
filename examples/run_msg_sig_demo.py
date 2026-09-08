@@ -22,6 +22,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+# Windows GBK 控制台无法编码 ✅ 等 emoji -> 强制 stdout UTF-8
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 from camunda.engine import ProcessEngine
 from camunda.parser import parse_bpmn_file
 from camunda.persistence.store import Store
@@ -126,8 +130,11 @@ def demo_crash_recovery() -> None:
 
     engine2.correlate_message("paymentReceived", variables={"paid": True})
     assert engine2.get_process_instance(pi1.id).is_completed
-    assert Store(db).load_active_instances() == [], "RU 应随实例完成清空"
+    with Store(db) as store:  # with 关闭临时连接（释放文件句柄）
+        assert store.load_active_instances() == [], "RU 应随实例完成清空"
     print("重启后回调到达 -> 发货续跑 -> 实例完成，RU 清空")
+    engine1.close()  # 释放两代引擎持有的 SQLite 连接（Windows 删除文件前必需）
+    engine2.close()
     Path(db).unlink()  # 清理演示库
     print()
 

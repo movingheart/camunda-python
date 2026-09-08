@@ -18,6 +18,9 @@ from __future__ import annotations
 
 import socket
 import sys
+# Windows GBK 控制台无法编码 ✅ 等 emoji -> 强制 stdout UTF-8
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 import threading
 import time
 from pathlib import Path
