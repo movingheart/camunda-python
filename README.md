@@ -30,20 +30,46 @@ pip install camunda-python             # 核心（BPMN / DMN / 持久化 / JobEx
 pip install camunda-python[api]        # 可选：REST API（fastapi + uvicorn）
 ```
 
-最小可运行示例（5 行跑通一个贷款审批流程）：
+最小可运行示例（拷贝即跑，无需任何本地文件；`examples/loan-approval.bpmn` 为本示例的完整版）：
 
 ```python
-from pathlib import Path
 from camunda.parser import parse_bpmn_xml
 from camunda.engine import ProcessEngine
 
-xml = Path("examples/loan-approval.bpmn").read_text()
-engine = ProcessEngine()
-engine.deploy(parse_bpmn_xml(xml, source_name="loan-approval.bpmn"))
+xml = """<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  id="d1" targetNamespace="http://example.com/loan">
+  <bpmn:process id="loan-approval" name="贷款审批流程" isExecutable="true">
+    <bpmn:startEvent id="start" name="提交申请"/>
+    <bpmn:serviceTask id="check-credit" camunda:delegateExpression="${checkCredit}"/>
+    <bpmn:exclusiveGateway id="amount-gateway" default="flow-auto-pass"/>
+    <bpmn:userTask id="manual-review" name="人工审批"/>
+    <bpmn:exclusiveGateway id="decision-gateway" default="flow-reject"/>
+    <bpmn:endEvent id="end-approved" name="已批准"/>
+    <bpmn:endEvent id="end-rejected" name="已拒绝"/>
+    <bpmn:sequenceFlow id="flow-start" sourceRef="start" targetRef="check-credit"/>
+    <bpmn:sequenceFlow id="flow-check" sourceRef="check-credit" targetRef="amount-gateway"/>
+    <bpmn:sequenceFlow id="flow-manual" sourceRef="amount-gateway" targetRef="manual-review">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${amount &gt;= 10000}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow-auto-pass" sourceRef="amount-gateway" targetRef="end-approved"/>
+    <bpmn:sequenceFlow id="flow-review" sourceRef="manual-review" targetRef="decision-gateway"/>
+    <bpmn:sequenceFlow id="flow-approve" sourceRef="decision-gateway" targetRef="end-approved">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approved == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow-reject" sourceRef="decision-gateway" targetRef="end-rejected"/>
+  </bpmn:process>
+</bpmn:definitions>"""
 
-pi = engine.start_process_instance_by_key("loan-approval", {"amount": 20000})
-task = engine.create_task_query(process_instance_id=pi.id)[0]
-engine.complete_task(task.id, {"approved": True})
+engine = ProcessEngine()
+engine.register_delegate("checkCredit", lambda v: v.update(credit_ok=True))  # serviceTask 实现
+engine.deploy(parse_bpmn_xml(xml))
+
+pi = engine.start_process_instance_by_key("loan-approval", {"amount": 20000})  # 大额 -> 人工审批
+task = engine.create_task_query(process_instance_id=pi.id)[0]                   # [人工审批]
+engine.complete_task(task.id, {"approved": True})                               # -> COMPLETED
 ```
 
 启动 REST 服务：
@@ -57,9 +83,11 @@ uvicorn camunda.api.app:create_app --factory --port 8080
 
 | 想做什么 | 看哪里 |
 |---|---|
-| 第一次接触，从「5 分钟 hello world」走到「生产部署」 | **[docs/USER_GUIDE.md](docs/USER_GUIDE.md)** |
-| 看引擎设计 / 模块划分 / 与 Camunda 7 的差异 | **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** |
-| 看每个示例跑什么场景 | **[examples/](examples/)** |
+| 第一次接触，从「5 分钟 hello world」走到「生产部署」 | **[docs/USER_GUIDE.md](https://github.com/movingheart/camunda-python/blob/main/docs/USER_GUIDE.md)** |
+| 看引擎设计 / 模块划分 / 与 Camunda 7 的差异 | **[docs/ARCHITECTURE.md](https://github.com/movingheart/camunda-python/blob/main/docs/ARCHITECTURE.md)** |
+| 看每个示例跑什么场景 | **[examples/](https://github.com/movingheart/camunda-python/tree/main/examples)** |
+
+> 文档与示例存放在 GitHub 仓库（PyPI 页面不内嵌），点击上方链接或在仓库根目录查看。
 
 ## 示例
 
@@ -106,10 +134,10 @@ CI 在 GitHub Actions 上跑 Python 3.12 / 3.13，每次 push 触发。
 - **持久化策略**：命令边界 delete + insert 全量重写（与 Camunda 7 逐行 update 不同），
   对中小流程足够快，恢复语义更直白。
 
-完整差异表见 [docs/ARCHITECTURE.md §设计取舍](docs/ARCHITECTURE.md)。
+完整差异表见 [docs/ARCHITECTURE.md §设计取舍](https://github.com/movingheart/camunda-python/blob/main/docs/ARCHITECTURE.md)。
 
 ## 许可
 
-Apache-2.0。详见 [LICENSE](LICENSE)。
+Apache-2.0。详见 [LICENSE](https://github.com/movingheart/camunda-python/blob/main/LICENSE)。
 
-变更记录见 [CHANGELOG.md](CHANGELOG.md)。
+变更记录见 [CHANGELOG.md](https://github.com/movingheart/camunda-python/blob/main/CHANGELOG.md)。
