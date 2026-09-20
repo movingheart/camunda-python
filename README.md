@@ -91,6 +91,8 @@ uvicorn camunda.api.app:create_app --factory --port 8080
 
 ## 示例
 
+> 完整实例：https://github.com/movingheart/camunda-examples
+
 仓库自带可直接 `python examples/xxx.py` 运行的可执行示例：
 
 | 示例 | 演示的引擎能力 |
